@@ -21,7 +21,7 @@ module SimpleQueue
     end
 
     def run
-      Consumer.new(pool, queue, logger).consume2
+      Consumer.new(pool, queue, logger).consume
     rescue Interrupt => e
       log "Interrupt received"
       log "Shutting down..."

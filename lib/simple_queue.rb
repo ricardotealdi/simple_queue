@@ -10,7 +10,6 @@ require 'concurrent'
 require 'simple_queue/logger'
 require 'simple_queue/queue'
 require 'simple_queue/consumer'
-require 'simple_queue/executor'
 require 'simple_queue/launcher'
 
 module SimpleQueue

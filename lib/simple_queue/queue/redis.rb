@@ -13,16 +13,31 @@ module SimpleQueue
       end
 
       def enqueue(worker_class, *args)
+        payload = { worker: worker_class, args: Array(args) }.to_json
+
         with_connection do |redis|
-          redis.lpush(name, { worker: worker_class, args: Array(args) }.to_json)
+          redis.lpush(name, payload)
         end
       end
 
       def next
-        with_connection do |redis|
-          content = redis.rpop(name)
-          content && JSON.parse(content)
+        content = with_connection do |redis|
+          redis.rpop(name)
         end
+
+        content && JSON.parse(content)
+      end
+
+      def increment(counter)
+        with_connection { |redis| redis.incr(counter_key(counter)) }
+      end
+
+      def reset(counter)
+        with_connection { |redis| redis.set(counter_key(counter), 0) }
+      end
+
+      def fetch_counter(counter)
+        with_connection { |redis| redis.get(counter_key(counter)) }
       end
 
       def all
@@ -39,6 +54,10 @@ module SimpleQueue
 
       def with_connection
         connection_pool.with { |redis| mutex.synchronize { yield(redis) } }
+      end
+
+      def counter_key(type)
+        "#{name}:#{type.downcase}:count".freeze
       end
     end
   end

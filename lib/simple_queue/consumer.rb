@@ -7,7 +7,7 @@ module SimpleQueue
       @i = 0
     end
 
-    def consume2
+    def consume
       (1..pool.max_length).map do |n|
         Concurrent::Future.new(executor: pool) do
           while true
@@ -23,27 +23,6 @@ module SimpleQueue
         logger.info "Starting worker #{n}"
         it.execute
       end.map(&:value)
-    end
-
-    def consume
-      while pool.running?
-
-        while element = queue.next
-          logger.debug 'Pooling'
-
-          begin
-            executor = Executor.new(pool, logger) do
-            end
-
-            while !executor.execute do
-              logger.debug "waiting #{n+1}"
-              sleep(0.1)
-            end
-          end
-        end
-        sleep(1)
-        logger.debug 'Pooled'
-      end
     end
 
     private
@@ -64,15 +43,19 @@ module SimpleQueue
 
         args = current.fetch('args')
         logger.info "i:#{@i += 1}, worker:#{worker}, value: #{args} processing"
-        worker.new(logger).perform(*args)
-        return true
+        queue.increment :processed
+        begin
+          worker.new(logger).perform(*args)
+          queue.increment :success
+          return true
+        rescue => e
+          queue.increment :error
+          queue.enqueue(worker, *args)
+          logger.error "Error: #{e.class}: #{e.message} #{e.backtrace.take(5)}"
+        end
       end
 
       false
-    rescue => e
-      queue.enqueue(worker, *args)
-      logger.error "Error: #{e.class}: #{e.message} #{e.backtrace.take(5)}"
-      true
     end
   end
 end
