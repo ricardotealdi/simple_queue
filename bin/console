@@ -1,0 +1,18 @@
+#!/usr/bin/env ruby
+
+require File.expand_path('../../lib/simple_queue', __FILE__)
+require 'pry'
+
+def reload!
+  puts 'Reloading...'
+
+  Object.send(:remove_const, 'SimpleQueue')
+
+  $LOADED_FEATURES.delete_if do |file|
+    file.start_with?(File.expand_path('../../lib', __FILE__))
+  end
+
+  require 'simple_queue'
+end
+
+Pry.start
