@@ -11,6 +11,7 @@ require 'simple_queue/logger'
 require 'simple_queue/queue'
 require 'simple_queue/consumer'
 require 'simple_queue/launcher'
+require 'simple_queue/storage'
 
 module SimpleQueue
 end
